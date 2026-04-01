@@ -1,19 +1,24 @@
-/* TranscriptPro — Clean, consistent with web version */
+/* TranscriptPro — Aligned with YouTubeTranscriptFree web style */
 
 :root {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-bg: #ffffff;
-  --color-bg-secondary: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text: #1e293b;
+  /* Purple primary matching the web site (oklch 0.55 0.21 277) */
+  --color-primary: #6d28d9;
+  --color-primary-hover: #5b21b6;
+  --color-primary-light: #ede9fe;
+  --color-bg: #f8f9fc;
+  --color-bg-card: #ffffff;
+  --color-border: #e2e5f0;
+  --color-text: #1f2937;
   --color-text-secondary: #64748b;
   --color-text-muted: #94a3b8;
-  --color-success: #22c55e;
+  --color-success: #10b981;
   --color-error: #ef4444;
-  --color-warning: #f59e0b;
+  --color-yt-red: #ff0000;
   --radius: 8px;
   --radius-lg: 12px;
+  --radius-full: 9999px;
+  --font-sans: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, sans-serif;
 }
 
 * {
@@ -23,13 +28,7 @@
 }
 
 body {
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
@@ -40,7 +39,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: 800px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -50,35 +49,49 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 20px 0;
-  border-bottom: 1px solid var(--color-border);
 }
 
+/* Logo — matches web site: red YT + dark Transcript + green Pro */
 .logo {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  gap: 0;
 }
 
-.logo-icon {
+.logo-yt {
   font-size: 28px;
+  font-weight: 800;
+  color: var(--color-yt-red);
+  letter-spacing: -0.5px;
 }
 
-.logo h1 {
+.logo-text {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-left: 4px;
+}
+
+.logo-pro {
   font-size: 22px;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-primary);
+  margin-left: 2px;
 }
 
 .version {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-muted);
-  background: var(--color-bg-secondary);
+  background: var(--color-primary-light);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-full);
 }
 
 .app-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 32px 0;
 }
 
@@ -87,19 +100,23 @@ body {
   text-align: center;
   font-size: 13px;
   color: var(--color-text-muted);
-  border-top: 1px solid var(--color-border);
 }
 
-/* URL Input */
+/* URL Input — pill shape matching web site */
 .url-input-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .url-input-row {
   display: flex;
-  gap: 12px;
+  gap: 0;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .url-input-wrapper {
@@ -107,18 +124,11 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  transition: border-color 0.2s;
-}
-
-.url-input-wrapper:focus-within {
-  border-color: var(--color-primary);
+  padding: 0 16px;
 }
 
 .url-icon {
-  color: var(--color-text-muted);
+  color: var(--color-yt-red);
   flex-shrink: 0;
 }
 
@@ -126,27 +136,32 @@ body {
   flex: 1;
   border: none;
   outline: none;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   background: transparent;
+  height: 44px;
 }
 
 .url-input::placeholder {
   color: var(--color-text-muted);
 }
 
-/* Buttons */
+/* Primary Button — purple matching web site */
 .btn-primary {
-  padding: 12px 24px;
+  padding: 0 28px;
+  height: 44px;
   background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: var(--radius);
-  font-size: 15px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -163,7 +178,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-card);
   color: var(--color-text);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -173,7 +188,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background: var(--color-border);
+  background: var(--color-primary-light);
 }
 
 .btn-sm {
@@ -205,18 +220,19 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 32px;
+  padding: 36px;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
+  background: var(--color-bg-card);
 }
 
 .drop-zone:hover,
 .drop-zone.dragging {
   border-color: var(--color-primary);
-  background: #eff6ff;
+  background: var(--color-primary-light);
   color: var(--color-primary);
 }
 
@@ -228,7 +244,8 @@ body {
 /* Options Row */
 .options-row {
   display: flex;
-  gap: 20px;
+  gap: 24px;
+  justify-content: center;
 }
 
 .option-group {
@@ -246,11 +263,20 @@ body {
 .option-group select {
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-full);
   font-size: 13px;
   color: var(--color-text);
-  background: white;
+  background: var(--color-bg-card);
   cursor: pointer;
+}
+
+/* Trust badges — matching web site */
+.trust-badges {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
 /* Progress Panel */
@@ -259,8 +285,10 @@ body {
   flex-direction: column;
   gap: 16px;
   padding: 32px;
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-card);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .progress-header {
@@ -281,16 +309,16 @@ body {
 }
 
 .progress-bar-track {
-  height: 8px;
-  background: var(--color-border);
-  border-radius: 4px;
+  height: 6px;
+  background: var(--color-primary-light);
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
   background: var(--color-primary);
-  border-radius: 4px;
+  border-radius: 3px;
   transition: width 0.3s ease;
 }
 
@@ -379,7 +407,7 @@ body {
   top: 100%;
   left: 0;
   margin-top: 4px;
-  background: white;
+  background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -399,7 +427,7 @@ body {
 }
 
 .export-menu button:hover {
-  background: var(--color-bg-secondary);
+  background: var(--color-primary-light);
 }
 
 /* Transcript Search */
@@ -409,8 +437,9 @@ body {
   gap: 8px;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-full);
   color: var(--color-text-muted);
+  background: var(--color-bg-card);
 }
 
 .transcript-search input {
@@ -419,6 +448,7 @@ body {
   outline: none;
   font-size: 14px;
   color: var(--color-text);
+  background: transparent;
 }
 
 .search-count {
@@ -433,8 +463,8 @@ body {
   gap: 4px;
   max-height: 50vh;
   overflow-y: auto;
-  padding: 16px;
-  background: var(--color-bg-secondary);
+  padding: 20px;
+  background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
 }
@@ -449,7 +479,7 @@ body {
 .segment-time {
   color: var(--color-primary);
   font-size: 13px;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 72px;

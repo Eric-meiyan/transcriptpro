@@ -1,5 +1,5 @@
 import { useState, useCallback, DragEvent } from "react";
-import { Link, Upload } from "lucide-react";
+import { Youtube, Upload, ArrowRight } from "lucide-react";
 
 interface UrlInputProps {
   onSubmitUrl: (url: string) => void;
@@ -92,14 +92,14 @@ export function UrlInput({
 
   return (
     <div className="url-input-container">
-      {/* URL Input */}
+      {/* URL Input — pill shape matching web site */}
       <div className="url-input-row">
         <div className="url-input-wrapper">
-          <Link size={18} className="url-icon" />
+          <Youtube size={20} className="url-icon" />
           <input
             type="text"
             className="url-input"
-            placeholder="粘贴 YouTube 链接..."
+            placeholder="Paste YouTube URL here..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -111,8 +111,16 @@ export function UrlInput({
           onClick={handleSubmit}
           disabled={disabled || !url.trim()}
         >
-          开始转录
+          Get Transcript
+          <ArrowRight size={16} />
         </button>
+      </div>
+
+      {/* Trust badges */}
+      <div className="trust-badges">
+        <span>🔒 Local Processing</span>
+        <span>⚡ Offline Support</span>
+        <span>📝 Multi-format Export</span>
       </div>
 
       {/* Divider */}

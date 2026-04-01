@@ -30,13 +30,12 @@ function App() {
 
   return (
     <div className="app">
-      {/* Header */}
+      {/* Header — matches web site: red YT + dark Transcript + purple Pro */}
       <header className="app-header">
         <div className="logo">
-          <span className="logo-icon">🎬</span>
-          <h1>
-            TranscriptPro
-          </h1>
+          <span className="logo-yt">YT</span>
+          <span className="logo-text">Transcript</span>
+          <span className="logo-pro">Pro</span>
         </div>
         <span className="version">v0.1.0</span>
       </header>
