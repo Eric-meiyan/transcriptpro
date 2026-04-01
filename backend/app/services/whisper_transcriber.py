@@ -57,13 +57,16 @@ class WhisperTranscriber:
         model_path = settings.models_dir / f"whisper-{self.model_name}"
 
         # Determine compute type based on device
-        compute_type = self.compute_type
-        if compute_type == "auto":
-            compute_type = "float16" if self.device != "cpu" else "int8"
-
         device = self.device
         if device == "auto":
             device = self._detect_device()
+
+        compute_type = self.compute_type
+        if compute_type == "auto":
+            if device == "cpu":
+                compute_type = "int8"
+            else:
+                compute_type = "float16"
 
         logger.info(
             f"Loading Whisper model: {self.model_name} "
@@ -138,21 +141,35 @@ class WhisperTranscriber:
             str(audio_path),
             language=language,
             beam_size=5,
-            vad_filter=True,  # Filter out silence
+            vad_filter=True,
             vad_parameters=dict(
-                min_silence_duration_ms=500,
+                min_silence_duration_ms=1000,
+                speech_pad_ms=400,
             ),
         )
 
-        segments = []
-        for seg in segments_iter:
-            segments.append(TranscriptSegment(
+        segments = list(segments_iter)
+
+        # If VAD filtered everything out, retry without VAD
+        if not segments:
+            logger.warning("VAD filtered all audio, retrying without VAD filter")
+            segments_iter, info = self.model.transcribe(
+                str(audio_path),
+                language=language,
+                beam_size=5,
+                vad_filter=False,
+            )
+            segments = list(segments_iter)
+
+        result = []
+        for seg in segments:
+            result.append(TranscriptSegment(
                 start=seg.start,
                 end=seg.end,
                 text=seg.text.strip(),
             ))
 
-        return segments, info.language
+        return result, info.language
 
     def _transcribe_chunked(
         self,

@@ -1,9 +1,12 @@
 """Layer 1: Extract YouTube subtitles via yt-dlp (fastest, free)."""
 
+import glob
 import json
 import logging
+import os
 import subprocess
 import re
+import tempfile
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -39,16 +42,16 @@ def extract_youtube_subtitles(
     Returns None if no subtitles available.
     """
     try:
-        # First, list available subtitles
+        # First, get video info including subtitle metadata
         result = subprocess.run(
-            ["yt-dlp", "--list-subs", "--print-json", "--skip-download", url],
+            ["yt-dlp", "--dump-json", "--skip-download", url],
             capture_output=True,
             text=True,
             timeout=30,
         )
 
         if result.returncode != 0:
-            logger.warning(f"yt-dlp list-subs failed: {result.stderr}")
+            logger.warning(f"yt-dlp dump-json failed: {result.stderr}")
             return None
 
         info = json.loads(result.stdout)
@@ -131,7 +134,6 @@ def _download_subtitle(
                 "--sub-langs", lang,
                 "--sub-format", "json3",
                 "--skip-download",
-                "--print-to-file", "%(requested_subtitles)j", "/dev/stdout",
                 "-o", "/tmp/tp_sub_%(id)s",
                 url,
             ],
@@ -141,7 +143,6 @@ def _download_subtitle(
         )
 
         # Find the downloaded subtitle file
-        import glob
         sub_files = glob.glob(f"/tmp/tp_sub_*.{lang}.json3")
         if not sub_files:
             # Try vtt format as fallback
@@ -183,9 +184,6 @@ def _download_subtitle_vtt(
     is_auto: bool,
 ) -> list[SubtitleSegment]:
     """Fallback: download VTT format and parse."""
-    import tempfile
-    import os
-
     with tempfile.TemporaryDirectory() as tmpdir:
         sub_flag = "--write-auto-subs" if is_auto else "--write-subs"
         subprocess.run(
@@ -204,7 +202,6 @@ def _download_subtitle_vtt(
         )
 
         # Find VTT file
-        import glob
         vtt_files = glob.glob(os.path.join(tmpdir, f"*.{lang}.vtt"))
         if not vtt_files:
             return []
