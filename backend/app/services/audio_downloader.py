@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.config import settings
+from app.services.ytdlp_common import get_ytdlp_base_args
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +37,9 @@ def get_video_info(url: str) -> VideoInfo | None:
             "--print-json",
             "--skip-download",
             "--no-warnings",
+            *get_ytdlp_base_args(),
+            url,
         ]
-
-        # Use proxy if configured (YouTube blocks data center IPs)
-        if settings.ytdlp_proxy:
-            cmd.extend(["--proxy", settings.ytdlp_proxy])
-
-        cmd.append(url)
 
         result = subprocess.run(
             cmd,
@@ -116,14 +113,10 @@ def download_audio(
             "--no-playlist",
             # Quiet
             "--no-warnings",
+            # Common args (proxy, EJS, SSL)
+            *get_ytdlp_base_args(),
+            url,
         ]
-
-        if proxy:
-            cmd.extend(["--proxy", proxy])
-        elif settings.ytdlp_proxy:
-            cmd.extend(["--proxy", settings.ytdlp_proxy])
-
-        cmd.append(url)
 
         logger.info(f"Downloading audio for: {video_info.title}")
         result = subprocess.run(

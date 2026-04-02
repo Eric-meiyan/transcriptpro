@@ -10,6 +10,7 @@ import tempfile
 from dataclasses import dataclass
 
 from app.config import settings
+from app.services.ytdlp_common import get_ytdlp_base_args
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,11 @@ def extract_youtube_subtitles(
     """
     try:
         # First, get video info including subtitle metadata
-        cmd = ["yt-dlp", "--dump-json", "--skip-download"]
-        if settings.ytdlp_proxy:
-            cmd.extend(["--proxy", settings.ytdlp_proxy])
-        cmd.append(url)
+        cmd = [
+            "yt-dlp", "--dump-json", "--skip-download",
+            *get_ytdlp_base_args(),
+            url,
+        ]
 
         result = subprocess.run(
             cmd,
@@ -141,10 +143,9 @@ def _download_subtitle(
             "--sub-format", "json3",
             "--skip-download",
             "-o", "/tmp/tp_sub_%(id)s",
+            *get_ytdlp_base_args(),
+            url,
         ]
-        if settings.ytdlp_proxy:
-            cmd.extend(["--proxy", settings.ytdlp_proxy])
-        cmd.append(url)
 
         result = subprocess.run(
             cmd,
@@ -204,10 +205,9 @@ def _download_subtitle_vtt(
             "--sub-format", "vtt",
             "--skip-download",
             "-o", os.path.join(tmpdir, "%(id)s"),
+            *get_ytdlp_base_args(),
+            url,
         ]
-        if settings.ytdlp_proxy:
-            cmd.extend(["--proxy", settings.ytdlp_proxy])
-        cmd.append(url)
 
         subprocess.run(
             cmd,
