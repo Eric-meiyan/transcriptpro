@@ -1,5 +1,5 @@
 import { useState, useCallback, DragEvent } from "react";
-import { Youtube, Upload, ArrowRight } from "lucide-react";
+import { Upload, ArrowRight } from "lucide-react";
 
 interface UrlInputProps {
   onSubmitUrl: (url: string) => void;
@@ -95,7 +95,7 @@ export function UrlInput({
       {/* URL Input — pill shape matching web site */}
       <div className="url-input-row">
         <div className="url-input-wrapper">
-          <Youtube size={20} className="url-icon" />
+          <img src="/logo.png" alt="logo" width={20} height={20} className="url-icon" />
           <input
             type="text"
             className="url-input"

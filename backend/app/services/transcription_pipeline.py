@@ -7,6 +7,7 @@ Layer 3: User manual upload → Whisper local transcription
 Layer 4: Groq API cloud transcription (V2, requires user API key)
 """
 
+import asyncio
 import logging
 import os
 from dataclasses import dataclass
@@ -111,7 +112,7 @@ async def transcribe_url(
     # --- Get video info ---
     report(TaskStatus.GETTING_INFO, "获取视频信息...")
 
-    video_info = get_video_info(url)
+    video_info = await asyncio.to_thread(get_video_info, url)
     if not video_info:
         raise TranscriptionError("无法获取视频信息，请检查 URL 是否正确")
 
@@ -123,7 +124,7 @@ async def transcribe_url(
     if is_youtube_url(url):
         report(TaskStatus.CHECKING_SUBTITLES, "检查字幕...", 5)
 
-        sub_result = extract_youtube_subtitles(url, language)
+        sub_result = await asyncio.to_thread(extract_youtube_subtitles, url, language)
         if sub_result and sub_result.segments:
             logger.info(
                 f"Layer 1 success: YouTube subtitles "
@@ -149,16 +150,16 @@ async def transcribe_url(
     # --- Layer 2: Download audio + Whisper ---
     report(TaskStatus.DOWNLOADING_AUDIO, "下载音频...", 10)
 
-    audio_result = download_audio(url)
+    audio_result = await asyncio.to_thread(download_audio, url)
 
     # If download fails, try updating yt-dlp and retry once
     if audio_result is None:
         logger.info("Download failed, updating yt-dlp and retrying...")
         report(TaskStatus.UPDATING_YTDLP, "更新下载引擎...", 12)
 
-        if update_ytdlp():
+        if await asyncio.to_thread(update_ytdlp):
             report(TaskStatus.DOWNLOADING_AUDIO, "重试下载...", 15)
-            audio_result = download_audio(url)
+            audio_result = await asyncio.to_thread(download_audio, url)
 
     if audio_result is None:
         # Layer 2 failed — signal that manual upload is needed
@@ -177,7 +178,7 @@ async def transcribe_url(
     report(TaskStatus.TRANSCRIBING, "正在转录...", 20)
 
     try:
-        transcriber = get_transcriber(model_name)
+        transcriber = await asyncio.to_thread(get_transcriber, model_name)
 
         def whisper_progress(current, total, pct):
             # Map Whisper progress to 20-95% range
@@ -188,10 +189,11 @@ async def transcribe_url(
                 mapped_pct,
             )
 
-        result = transcriber.transcribe(
+        result = await asyncio.to_thread(
+            transcriber.transcribe,
             audio_result.audio_path,
-            language=language,
-            on_progress=whisper_progress,
+            language,
+            whisper_progress,
         )
 
         logger.info(
@@ -242,13 +244,13 @@ async def transcribe_local_file(
     video_extensions = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv"}
     if file_path.suffix.lower() in video_extensions:
         report(TaskStatus.DOWNLOADING_AUDIO, "提取音频...", 5)
-        audio_path = _extract_audio_from_video(file_path)
+        audio_path = await asyncio.to_thread(_extract_audio_from_video, file_path)
         needs_cleanup = True
 
     try:
         report(TaskStatus.TRANSCRIBING, "正在转录...", 10)
 
-        transcriber = get_transcriber(model_name)
+        transcriber = await asyncio.to_thread(get_transcriber, model_name)
 
         def whisper_progress(current, total, pct):
             mapped_pct = 10 + (pct / 100) * 85
@@ -258,10 +260,11 @@ async def transcribe_local_file(
                 mapped_pct,
             )
 
-        result = transcriber.transcribe(
+        result = await asyncio.to_thread(
+            transcriber.transcribe,
             audio_path,
-            language=language,
-            on_progress=whisper_progress,
+            language,
+            whisper_progress,
         )
 
         report(TaskStatus.COMPLETED, "转录完成！", 100)
