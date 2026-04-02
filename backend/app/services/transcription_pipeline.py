@@ -63,6 +63,7 @@ class TaskProgress:
     percent: float = 0.0
     current_chunk: int = 0
     total_chunks: int = 0
+    video_duration: float = 0.0
 
 
 @dataclass
@@ -103,10 +104,13 @@ async def transcribe_url(
     Implements the 4-layer fallback strategy.
     """
 
+    video_duration_s = 0.0
+
     def report(status: TaskStatus, message: str, pct: float = 0):
         if on_progress:
             on_progress(TaskProgress(
-                status=status, message=message, percent=pct
+                status=status, message=message, percent=pct,
+                video_duration=video_duration_s,
             ))
 
     # --- Get video info ---
@@ -115,6 +119,8 @@ async def transcribe_url(
     video_info = await asyncio.to_thread(get_video_info, url)
     if not video_info:
         raise TranscriptionError("无法获取视频信息，请检查 URL 是否正确")
+
+    video_duration_s = video_info.duration
 
     logger.info(
         f"Video: {video_info.title} ({video_info.duration:.0f}s)"

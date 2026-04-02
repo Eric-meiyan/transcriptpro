@@ -28,13 +28,16 @@ celery_app.conf.update(
 )
 
 
-def _update_task(task_id: str, status: str, message: str, percent: float):
+def _update_task(task_id: str, status: str, message: str, percent: float, extra: dict | None = None):
     """Update task status in Redis."""
     import redis as redis_lib
     r = redis_lib.Redis.from_url(settings.redis_url, decode_responses=True)
+    data = {"status": status, "message": message, "percent": percent}
+    if extra:
+        data.update(extra)
     r.set(
         f"task:{task_id}",
-        json.dumps({"status": status, "message": message, "percent": percent}),
+        json.dumps(data),
         ex=settings.result_ttl_seconds,
     )
     r.close()
@@ -68,7 +71,10 @@ def transcribe_url_task(self, task_id: str, url: str, language: str | None, mode
     logger.info(f"[{task_id}] Starting transcription: {url}")
 
     def on_progress(progress: TaskProgress):
-        _update_task(task_id, progress.status, progress.message, progress.percent)
+        extra = {}
+        if progress.video_duration:
+            extra["video_duration"] = progress.video_duration
+        _update_task(task_id, progress.status, progress.message, progress.percent, extra or None)
 
     try:
         _update_task(task_id, "getting_info", "Getting video info...", 5)
