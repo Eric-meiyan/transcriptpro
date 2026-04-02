@@ -48,7 +48,7 @@ def get_video_info(url: str) -> VideoInfo | None:
             cmd,
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=120,  # 2 min (proxy is slower)
         )
 
         if result.returncode != 0:

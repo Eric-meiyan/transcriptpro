@@ -54,7 +54,7 @@ def extract_youtube_subtitles(
             cmd,
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=120,  # 2 min (proxy is slower)
         )
 
         if result.returncode != 0:
@@ -150,7 +150,7 @@ def _download_subtitle(
             cmd,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,  # 2 min (proxy is slower)
         )
 
         # Find the downloaded subtitle file
@@ -213,7 +213,7 @@ def _download_subtitle_vtt(
             cmd,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=120,  # 2 min (proxy is slower)
         )
 
         # Find VTT file
