@@ -9,6 +9,8 @@ import re
 import tempfile
 from dataclasses import dataclass
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,8 +45,13 @@ def extract_youtube_subtitles(
     """
     try:
         # First, get video info including subtitle metadata
+        cmd = ["yt-dlp", "--dump-json", "--skip-download"]
+        if settings.ytdlp_proxy:
+            cmd.extend(["--proxy", settings.ytdlp_proxy])
+        cmd.append(url)
+
         result = subprocess.run(
-            ["yt-dlp", "--dump-json", "--skip-download", url],
+            cmd,
             capture_output=True,
             text=True,
             timeout=30,
@@ -127,16 +134,20 @@ def _download_subtitle(
     """Download and parse subtitle file."""
     try:
         sub_flag = "--write-auto-subs" if is_auto else "--write-subs"
+        cmd = [
+            "yt-dlp",
+            sub_flag,
+            "--sub-langs", lang,
+            "--sub-format", "json3",
+            "--skip-download",
+            "-o", "/tmp/tp_sub_%(id)s",
+        ]
+        if settings.ytdlp_proxy:
+            cmd.extend(["--proxy", settings.ytdlp_proxy])
+        cmd.append(url)
+
         result = subprocess.run(
-            [
-                "yt-dlp",
-                sub_flag,
-                "--sub-langs", lang,
-                "--sub-format", "json3",
-                "--skip-download",
-                "-o", "/tmp/tp_sub_%(id)s",
-                url,
-            ],
+            cmd,
             capture_output=True,
             text=True,
             timeout=60,
@@ -186,16 +197,20 @@ def _download_subtitle_vtt(
     """Fallback: download VTT format and parse."""
     with tempfile.TemporaryDirectory() as tmpdir:
         sub_flag = "--write-auto-subs" if is_auto else "--write-subs"
+        cmd = [
+            "yt-dlp",
+            sub_flag,
+            "--sub-langs", lang,
+            "--sub-format", "vtt",
+            "--skip-download",
+            "-o", os.path.join(tmpdir, "%(id)s"),
+        ]
+        if settings.ytdlp_proxy:
+            cmd.extend(["--proxy", settings.ytdlp_proxy])
+        cmd.append(url)
+
         subprocess.run(
-            [
-                "yt-dlp",
-                sub_flag,
-                "--sub-langs", lang,
-                "--sub-format", "vtt",
-                "--skip-download",
-                "-o", os.path.join(tmpdir, "%(id)s"),
-                url,
-            ],
+            cmd,
             capture_output=True,
             text=True,
             timeout=60,

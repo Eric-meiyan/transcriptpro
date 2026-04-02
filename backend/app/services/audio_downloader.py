@@ -31,14 +31,21 @@ class AudioDownloadResult:
 def get_video_info(url: str) -> VideoInfo | None:
     """Get video metadata without downloading."""
     try:
+        cmd = [
+            "yt-dlp",
+            "--print-json",
+            "--skip-download",
+            "--no-warnings",
+        ]
+
+        # Use proxy if configured (YouTube blocks data center IPs)
+        if settings.ytdlp_proxy:
+            cmd.extend(["--proxy", settings.ytdlp_proxy])
+
+        cmd.append(url)
+
         result = subprocess.run(
-            [
-                "yt-dlp",
-                "--print-json",
-                "--skip-download",
-                "--no-warnings",
-                url,
-            ],
+            cmd,
             capture_output=True,
             text=True,
             timeout=30,
