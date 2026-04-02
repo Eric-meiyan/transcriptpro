@@ -12,28 +12,33 @@ class Settings(BaseModel):
     app_data_dir: Path = Path.home() / ".transcriptpro"
     models_dir: Path = Path.home() / ".transcriptpro" / "models"
     temp_dir: Path = Path.home() / ".transcriptpro" / "temp"
-    db_path: Path = Path.home() / ".transcriptpro" / "transcriptpro.db"
 
     # Server
-    host: str = "127.0.0.1"
-    port: int = 18562  # Random high port for local use
+    host: str = "0.0.0.0"
+    port: int = 18562
+
+    # Security — only accept requests with this secret
+    api_secret: str = os.getenv("API_SECRET", "")
+
+    # Redis
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Whisper defaults
-    default_model: str = "small"
+    default_model: str = os.getenv("WHISPER_MODEL", "small")
     default_language: str | None = None  # None = auto-detect
 
-    # yt-dlp
-    ytdlp_proxy: str | None = None
+    # yt-dlp proxy (IPRoyal residential proxy)
+    ytdlp_proxy: str | None = os.getenv("PROXY_URL", None)
 
     # Transcription
     chunk_duration_sec: int = 600  # 10 minutes
     chunk_overlap_sec: int = 30   # 30 seconds overlap
 
-    # Limits (enforced client-side, reference here)
-    free_max_duration_sec: int = 1800   # 30 minutes
-    standard_max_duration_sec: int = 3600  # 60 minutes
-    free_monthly_limit: int = 3
-    standard_monthly_limit: int = 100
+    # Worker
+    worker_concurrency: int = int(os.getenv("WORKER_CONCURRENCY", "4"))
+
+    # Result cache TTL
+    result_ttl_seconds: int = 86400  # 24 hours
 
     def ensure_dirs(self):
         """Create necessary directories."""
