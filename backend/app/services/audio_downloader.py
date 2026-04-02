@@ -77,6 +77,7 @@ def download_audio(
     url: str,
     output_dir: Path | None = None,
     proxy: str | None = None,
+    video_info: VideoInfo | None = None,
 ) -> AudioDownloadResult | None:
     """
     Download audio stream only (not full video).
@@ -84,6 +85,8 @@ def download_audio(
     YouTube stores video and audio separately (DASH format).
     yt-dlp can download just the audio stream: ~5-20MB per hour
     vs ~500MB-2GB for full video.
+
+    Pass video_info to skip redundant get_video_info call.
     """
     if output_dir is None:
         output_dir = settings.temp_dir
@@ -91,10 +94,11 @@ def download_audio(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Get video info first
-        video_info = get_video_info(url)
-        if not video_info:
-            return None
+        # Use provided video_info or fetch it
+        if video_info is None:
+            video_info = get_video_info(url)
+            if not video_info:
+                return None
 
         output_path = output_dir / f"{video_info.id}.wav"
 

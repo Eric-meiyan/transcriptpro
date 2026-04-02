@@ -150,7 +150,8 @@ async def transcribe_url(
     # --- Layer 2: Download audio + Whisper ---
     report(TaskStatus.DOWNLOADING_AUDIO, "下载音频...", 10)
 
-    audio_result = await asyncio.to_thread(download_audio, url)
+    # Pass video_info to avoid redundant get_video_info call (saves 30-120s via proxy)
+    audio_result = await asyncio.to_thread(download_audio, url, None, None, video_info)
 
     # If download fails, try updating yt-dlp and retry once
     if audio_result is None:
@@ -159,7 +160,7 @@ async def transcribe_url(
 
         if await asyncio.to_thread(update_ytdlp):
             report(TaskStatus.DOWNLOADING_AUDIO, "重试下载...", 15)
-            audio_result = await asyncio.to_thread(download_audio, url)
+            audio_result = await asyncio.to_thread(download_audio, url, None, None, video_info)
 
     if audio_result is None:
         # Layer 2 failed — signal that manual upload is needed
