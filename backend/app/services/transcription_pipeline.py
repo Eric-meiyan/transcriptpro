@@ -92,6 +92,32 @@ def is_youtube_url(url: str) -> bool:
     return any(p in url for p in youtube_patterns)
 
 
+def clean_youtube_url(url: str) -> str:
+    """Strip playlist, timestamp, and tracking params from YouTube URLs.
+    
+    e.g. https://www.youtube.com/watch?v=abc&list=XYZ&t=58s&si=tracking
+      -> https://www.youtube.com/watch?v=abc
+    
+    e.g. https://youtu.be/abc?si=tracking&t=58
+      -> https://youtu.be/abc
+    """
+    from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query)
+
+    if "youtube.com" in parsed.netloc or "m.youtube.com" in parsed.netloc:
+        # Keep only v= parameter
+        if "v" in params:
+            clean_query = urlencode({"v": params["v"][0]})
+            return urlunparse(parsed._replace(query=clean_query))
+    elif "youtu.be" in parsed.netloc:
+        # Short URLs: video ID is in the path, strip all query params
+        return urlunparse(parsed._replace(query=""))
+
+    return url
+
+
 async def transcribe_url(
     url: str,
     language: str | None = None,
@@ -103,6 +129,13 @@ async def transcribe_url(
 
     Implements the 4-layer fallback strategy.
     """
+
+    # Clean YouTube URLs: strip &list=, &t=, &si= params
+    if is_youtube_url(url):
+        original_url = url
+        url = clean_youtube_url(url)
+        if url != original_url:
+            logger.info(f"URL cleaned: {original_url} -> {url}")
 
     video_duration_s = 0.0
 
@@ -159,26 +192,36 @@ async def transcribe_url(
     # Pass video_info to avoid redundant get_video_info call (saves 30-120s via proxy)
     audio_result = await asyncio.to_thread(download_audio, url, None, None, video_info)
 
-    # If download fails, try updating yt-dlp and retry once
-    if audio_result is None:
-        logger.info("Download failed, updating yt-dlp and retrying...")
-        report(TaskStatus.UPDATING_YTDLP, "更新下载引擎...", 12)
+    # Retry up to 3 times on failure (proxy IP rotation usually fixes 403 errors)
+    max_retries = 3
+    for retry in range(1, max_retries + 1):
+        if audio_result is not None:
+            break
 
-        if await asyncio.to_thread(update_ytdlp):
-            report(TaskStatus.DOWNLOADING_AUDIO, "重试下载...", 15)
-            audio_result = await asyncio.to_thread(download_audio, url, None, None, video_info)
+        if retry == 1:
+            # First retry: update yt-dlp, then retry
+            logger.info("Download failed, updating yt-dlp and retrying...")
+            report(TaskStatus.UPDATING_YTDLP, "更新下载引擎...", 12)
+            await asyncio.to_thread(update_ytdlp)
+
+        logger.info(f"Retry {retry}/{max_retries}: downloading audio...")
+        report(TaskStatus.DOWNLOADING_AUDIO, f"重试下载 ({retry}/{max_retries})...", 13 + retry)
+
+        # Brief pause to allow proxy IP rotation
+        await asyncio.sleep(3)
+        audio_result = await asyncio.to_thread(download_audio, url, None, None, video_info)
 
     if audio_result is None:
         # Layer 2 failed — signal that manual upload is needed
-        logger.warning("Layer 2 failed: audio download unsuccessful")
+        logger.warning("Layer 2 failed: audio download unsuccessful after retries")
         report(
             TaskStatus.DOWNLOAD_FAILED,
-            "自动下载失败，请手动下载视频/音频后拖入应用",
+            "自动下载失败，请稍后重试",
             0,
         )
         raise DownloadFailedError(
             "音频下载失败。可能是 YouTube 限制或网络问题。\n"
-            "请尝试手动下载视频后拖入应用。"
+            "请稍后重试。"
         )
 
     # Whisper transcription
